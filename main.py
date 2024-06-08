@@ -18,8 +18,8 @@ keyring_phone_password_username       = "asdzmxmamMMMasdzxc091230asdxzcmappqmzAm
 keyring_phone_data_service            = "asdmxczmmMASMDAMSMDzoads12309123mzczasd01Xasd"
 keyring_phone_data_username           = "amsdasmdomdOMADSMASDMAom12301aASDOIXZCmpaoqma"
 
-keyring_app_name_and_address_service  = "asdkadoasmMasodasd9123asdmzxcoasd101239Xmasd1"
-keyring_app_name_and_address_username = "asdkAAsmMasoAAdasd9123asdmzxcoasMa9sd1AoasdAX"
+keyring_forbidden_address_service     = "asdkadoasmMasodasd9123asdmzxcoasd101239Xmasd1"
+keyring_forbidden_address_username    = "asdkAAsmMasoAAdasd9123asdmzxcoasMa9sd1AoasdAX"
 
 keyring_accessible_days_service       = "asmdMMAsdmaxnzNNNasdaxcASDamp1239A912mAxoasdxp"
 keyring_accessible_days_username      = "DAsdmammaODODpadahasdMAsdosadmPqwe20123mAsdo12"
@@ -31,6 +31,18 @@ current_service_data = "3" * 1000
 ##current_password = "01MAx=asd,!0MxzASDomzxcAP3#[a=1230X(masdp>Sdm23-"
 current_password = '"+dd&!A:>l%?B+p;9/M5'
 phone_password   = "phone_password1"
+
+INITIAL_ETC_HOSTS_TEXT = """##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1    localhost
+255.255.255.255    broadcasthost
+::1    localhost
+"""
+
 
 def calc_month_dif(d1, d2):
     return abs(12 * (d1.year - d2.year) + (d1.month - d2.month))
@@ -52,8 +64,7 @@ def run_command(query):
     index = child.expect([".?[Pp]assword:?.?", pexpect.EOF, pexpect.TIMEOUT])
     if index == 0: child.sendline(current_password)
     child.interact()
-    
-
+ 
 def is_free_open_interval():
     s1, s2 = get_free_opens().split("|")
     def check_is_in_interval(s):
@@ -83,74 +94,42 @@ def open_forbiddens(query):
     if not is_free_open_interval(): decrement_count()
     data = query.split(" ")[1:]
 
-    forbiddens = get_forbiddens()
-    if not forbiddens:
-        print("database is empty")
-        return
-    
-    forbiddens = forbiddens.split("[")[1:]
     delete_etc_hosts()
-    for name in data:
-        for forbidden_name, forbidden_address in forbiddens.split("|"):
-            if name != forbidden_name: continue
-            webbrowser.open("https://" + forbidden_address)
-            break
+    for asked_adresses in data:
+        webbrowser.open(asked_adresses)
     
-    time.sleep(0.2)
+    time.sleep(1)
     save_keyring_to_etc_hosts()
     
 
 def add_forbidden(query):
-    if query.count(" ") < 1:
+    if query.count(" ") != 1:
         print("wrong input format")
         return
     data = query.split(" ")
-    
     if len(data) != 2:
-        print("wrong input format it should be written like add_forbidden xxx|xxx.com")
+        print("wrong input format it should be written like add_forbidden www.youtube.com")
         return
     
-    query = data[1]
-    if query.count("|") != 1:
-        print("wrong input format delimeter should be |")
-        return
-    
-    name, address = query.split("|")
-    if not name or not address:
+    address = data[1]
+    if not address:
         print("wrong input format empty name or empty address")
         return
     
     forbiddens = get_forbiddens() or ""
-    if forbiddens:
-        data = [el for part in forbiddens.split("[")[1:] for el in part.split("|") ]
-        if data.count(address) or data.count(name):
-            print("wrong input address or name already in database")
-            return
+    if forbiddens and forbiddens.split("|").count(address):
+        print("wrong input address already in database")
+        return
     
-    keyring.set_password(keyring_app_name_and_address_service, keyring_app_name_and_address_username, forbiddens + "[" + query)
+    keyring.set_password(keyring_forbidden_address_service, keyring_forbidden_address_username, forbiddens + "|" + address)
     save_keyring_to_etc_hosts()
 
 def save_keyring_to_etc_hosts():
     prev_forbiddens = get_forbiddens() or ""
-    text = """##
-# Host Database
-#
-# localhost is used to configure the loopback interface
-# when the system is booting.  Do not change this entry.
-##
-127.0.0.1    localhost
-255.255.255.255    broadcasthost
-::1    localhost
-
-"""
-    if not prev_forbiddens:
-        print("wrong input no prev_forbiddens are avaliable nothing to save")
-        return
-
-    for part in prev_forbiddens.split("[")[1:]:
-        forbidden_name, forbidden_address = part.split("|")
-        text += f"127.0.0.1 {forbidden_address}\n"
-
+    text = INITIAL_ETC_HOSTS_TEXT
+    for address in prev_forbiddens.split("|")[1:]:
+        text += f"127.0.0.1 {address}\n"
+    
     command = f"echo '{text}' | sudo tee /etc/hosts"
     child = pexpect.spawn('/bin/bash', ['-c', command])
     index = child.expect(["Password:", pexpect.EOF, pexpect.TIMEOUT])
@@ -165,7 +144,7 @@ def get_count_phone():
 
 
 def get_forbiddens():
-    return keyring.get_password(keyring_app_name_and_address_service, keyring_app_name_and_address_username)
+    return keyring.get_password(keyring_forbidden_address_service, keyring_forbidden_address_username)
 
 
 def get_count():
@@ -209,7 +188,14 @@ def set_new_open(query):
 
 
 def delete_etc_hosts():
-    pass
+    text = INITIAL_ETC_HOSTS_TEXT
+    command = f"echo '{text}' | sudo tee /etc/hosts"
+    child = pexpect.spawn('/bin/bash', ['-c', command])
+    index = child.expect(["Password:", pexpect.EOF, pexpect.TIMEOUT])
+    if index == 0: child.sendline(current_password)
+    child.interact()
+    print("/etc/hosts sucessfully updated")
+
 
 def help_command(query):
     pass
@@ -217,11 +203,11 @@ def help_command(query):
 print("\n+------------------------------------ Commands ------------------------------------+")
 print("| run             \\\ run command and enter password if needed run rm -rf xx        |")
 print("| get_count       \\\ get count of the urgent open for this month                   |")
-print("| open_forbiddens \\\ open the forbidden aplication example open all                |")
+print("| open_forbiddens \\\ open_forbiddens www.youtube.com/watch?v=wX9cJ6t8IdI           |")
 print("| get_forbiddens  \\\ get names of forbidden applications                           |")
 print("| get_free_opens  \\\ get days hours of free open                                   |")
 print("| set_new_open    \\\ this set new open date example set_new_open 0:12-40 6:10-30   |")
-print("| add_forbidden   \\\ example usage add_forbidden youtube|www.youtube.com           |")
+print("| add_forbidden   \\\ example usage add_forbidden www.youtube.com                   |")
 print("| get_count_phone \\\ get count of urgen open phone for this month                  |")
 print("| phone_password  \\\ show the phone password                                       |")
 print("| help_command    \\\ examples help run or help open it gives detailed explanation  |")
@@ -244,3 +230,6 @@ while query != "q" and query != "quit":
     query = input("enter new input: ")
 
 print("aplication is closed")
+
+## TODO help ekle bide set_new_open diyince counttan azalsın add initial password kısmıda ekle
+## TODO bi hafta dene bide
