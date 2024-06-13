@@ -53,5 +53,6 @@ keyring_last_open_username            = "31om13od1m3odm1od1"
 7) open the file, the operating system will ask you password multiple times due to the keyring you need to write the password
 
 8) in first open application ask you the password and the dates you want to open restricted applications, you need to enter them
-   
+
+9) open finder goto this folder goto dist there is a executable named main
 
