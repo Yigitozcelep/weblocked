@@ -47,7 +47,6 @@ def delete_keyrings():
     if keyring.get_password(keyring_last_open_service, keyring_last_open_username):
         keyring.delete_password(keyring_last_open_service, keyring_last_open_username)
 
-delete_keyrings()
 
 def initialize_app():
     if not keyring.get_password(keyring_date_data_service, keyring_date_data_username):
