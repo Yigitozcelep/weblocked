@@ -157,7 +157,7 @@ def open_forbiddens(query):
     for asked_adresses in data:
         webbrowser.open(asked_adresses)
     
-    time.sleep(0.3)
+    time.sleep(1)
     save_keyring_to_etc_hosts()
     
 
