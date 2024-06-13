@@ -47,12 +47,17 @@ keyring_last_open_username            = "31om13od1m3odm1od1"
 4) open the application and enter the password you saved
 
 5) pip install pyinstaller
+   pip install keyring
+   pip install pexpect
 
-6) pyinstaller weblocked.py --distpath /Users/yigitozcelep/Desktop --onefile  ## you need to make location desktop because keyring can accessed only first bundled place so if you not specify the destination to desktop you can not use it in desktop
 
-7) open the file, the operating system will ask you password multiple times due to the keyring you need to write the password
 
-8) in first open application ask you the password and the dates you want to open restricted applications, you need to enter them
 
-9) make sure that use every command in first open because keyring will ask you the password for access (only one time) click always allowed
+7) pyinstaller weblocked.py --distpath /Users/yigitozcelep/Desktop --onefile  ## you need to make location desktop because keyring can accessed only first bundled place so if you not specify the destination to desktop you can not use it in desktop
+
+8) open the file, the operating system will ask you password multiple times due to the keyring you need to write the password
+
+9) in first open application ask you the password and the dates you want to open restricted applications, you need to enter them
+
+10) make sure that use every command in first open because keyring will ask you the password for access (only one time) click always allowed
 
