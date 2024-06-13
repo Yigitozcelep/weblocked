@@ -24,6 +24,7 @@ keyring_accessible_days_username      = ""
 keyring_last_open_service             = ""       
 keyring_last_open_username            = ""
 
+
 current_service_data = "3" * 1000
 
 def delete_keyrings():
@@ -65,7 +66,9 @@ def initialize_app():
                 continue
             
             day1, day2 = query.split(" ")
-            if not check_interval_format(day1) or not check_interval_format(day2): continue
+            if not check_interval_format(day1) or not check_interval_format(day2): 
+                print("wrong input format")
+                continue
             save_open_format(day1, day2)
             break
     
@@ -245,7 +248,9 @@ def set_new_open(query):
         return
     
     _, day1, day2 = query.split(" ")
-    if not check_interval_format(day1) or not check_interval_format(day2): return
+    if not check_interval_format(day1) or not check_interval_format(day2): 
+        print("wrong input format")
+        return
     if not is_free_open_interval() and get_count() <= 0 :
         print("your count is 0 you can not open forbidden application")
         return
