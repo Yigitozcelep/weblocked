@@ -6,23 +6,23 @@ import time
 
 initial_date = datetime.datetime.strptime("2024-06-07 00:00:00", "%Y-%m-%d %H:%M:%S")
 
-keyring_date_data_service             = "amco03AsxMAAsoasmmnvbcxPppllmkJhtgfX2391230"
-keyring_date_data_username            = "nbmhttt9M19AlLmnAxcnvmFtReSsa1230asdmLxxXa"
+keyring_date_data_service             = ""
+keyring_date_data_username            = ""
 
-keyring_terminal_password_service     = "M10asdmAASxzcKK12GjfasdlmasdASzxncmASD1230a"
-keyring_terminal_password_username    = "ASdm1230asdmASdn124XmaX99XX912m321Aasd912mA"
+keyring_terminal_password_service     = ""
+keyring_terminal_password_username    = ""
 
-keyring_phone_password_service        = "Amasd9XCMasAAMzxm33A9123932AAAmamxXaoOqpad9"
-keyring_phone_password_username       = "B1239AS9ammmasd123m39MaoaoasdppOOamASTTaxSy"
+keyring_phone_password_service        = ""
+keyring_phone_password_username       = ""
 
-keyring_forbidden_address_service     = "ASdm120213mASdmj12mJadahdASdmamXxxJasksanxm"
-keyring_forbidden_address_username    = "ASDmmdasmSAD1230ASmm120ASDaOASDsaddd1Ooqwea"
+keyring_forbidden_address_service     = ""
+keyring_forbidden_address_username    = ""
 
-keyring_accessible_days_service       = "MxnSdjajSjHKDD3mAD19231923ASDmkUUrReQpamX23"
-keyring_accessible_days_username      = "MAsmdncvncv041kL2M0REUoxadSDlkpOOpq239URrsad"
+keyring_accessible_days_service       = ""
+keyring_accessible_days_username      = ""
 
-keyring_last_open_service             = "C2m123m0123HHnGsdc33Mad213hfTuopM1230754Xma"       
-keyring_last_open_username            = "U2mASD9123mAA19390KmTT1221asdma123AAxctYxmu"
+keyring_last_open_service             = ""       
+keyring_last_open_username            = ""
 
 current_service_data = "3" * 1000
 
@@ -257,7 +257,7 @@ def set_new_open(query):
     
     save_open_format(day1, day2)
     print("new day is successfully updated")
-    
+
 
 def delete_etc_hosts():
     text = INITIAL_ETC_HOSTS_TEXT
