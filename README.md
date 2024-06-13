@@ -63,3 +63,7 @@ keyring_last_open_username            = "31om13od1m3odm1od1"
 
 10) make sure that use every command in first open because keyring will ask you the password for access (only one time) click always allowed
 
+11) for enter phone password automaticly,
+    watch this video https://www.youtube.com/watch?v=We45D_TjKdc or write adb: no devices/emulators found to youtube.
+
+    ayarlar(settings)->telefone hakkında(about phone) -> yazılım bilgileri -> 7 kere yapım numarasına tıkla -> ayarlara çık gir yap -> en aşağıda geliştirici seçenekleri -> uyanık kal ve usb hata ayıklaması nı aç
