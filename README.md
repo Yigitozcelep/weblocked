@@ -49,6 +49,8 @@ keyring_last_open_username            = "31om13od1m3odm1od1"
 5) pip install pyinstaller
    pip install keyring
    pip install pexpect
+   brew install android-platform-tools
+
 
 
 
