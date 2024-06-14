@@ -3,6 +3,8 @@ import keyring
 import datetime
 import pexpect
 import time
+import subprocess
+import re
 
 initial_date = datetime.datetime.strptime("2024-06-07 00:00:00", "%Y-%m-%d %H:%M:%S")
 
@@ -142,7 +144,6 @@ def open_forbiddens(query):
         print(f"invalid format {query}")
         return
     
-    
     if not is_free_open_interval() and count <= 0 :
         print("your count is 0 you can not open forbidden application")
         return
@@ -157,7 +158,6 @@ def open_forbiddens(query):
     for asked_adresses in data:
         webbrowser.open(asked_adresses)
     
-    time.sleep(1)
     save_keyring_to_etc_hosts()
     
 
@@ -215,7 +215,9 @@ def decrement_count():
 
 def get_free_opens():
     return keyring.get_password(keyring_accessible_days_service, keyring_accessible_days_username)
-    
+
+def get_phone_password():
+    return keyring.get_password(keyring_phone_password_service, keyring_phone_password_username)
 
 def print_phone_password():
     count = get_count()
@@ -228,7 +230,7 @@ def print_phone_password():
         keyring.set_password(keyring_last_open_service, keyring_last_open_username, str(datetime.datetime.today()))
 
 
-    print("password: ", keyring.get_password(keyring_phone_password_service, keyring_phone_password_username))
+    print("password: ", get_phone_password())
 
 
 def check_interval_format(d):
@@ -309,6 +311,7 @@ def help_command(query):
         case "phone_password"   : print("show your phone password, it also use open count so you do not have enough open count you can not see your password")
         case "set phone"        : print("set phone password it can be changed it does not affect on open count you can freely change phone password")
         case "get_last_visit"   : print("prints the last open time outside of the free open intervals you can do anything such as run or open_forbiddens with in 1 hour of last visit freely")
+        case "open_phone"       : print("open your phone via cable, it decreases the open count by one")
         case "info"             : print("give general info about the application")
 
 def set_new_terminal_password():
@@ -340,9 +343,65 @@ def set_phone(query):
     keyring.set_password(keyring_phone_password_service, keyring_phone_password_username, data)
     print("phone password successfully updated")
     
-        
 
-def start():
+
+def open_phone():
+    if not is_free_open_interval() and get_count() <= 0 :
+        print("your count is 0 you can not open forbidden application")
+        return
+    
+    if not is_free_open_interval():
+        decrement_count()
+        keyring.set_password(keyring_last_open_service, keyring_last_open_username, str(datetime.datetime.today()))
+
+    result = subprocess.run(f"adb shell input text {get_phone_password()}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = result.stdout.decode('utf-8'), result.stderr.decode('utf-8')
+    if stderr:
+        print(f"error occured {stderr}")
+    else:
+        print(f"your phone successfully opened")
+
+
+
+def get_contact_list():
+    result = subprocess.check_output("adb shell content query --uri content://com.android.contacts/data --projection display_name:data1:data4:contact_id", shell=True)
+    print("+-----------------------------------------------------------------------+")
+    max_len = 0
+    for part in result.decode("utf-8").split("\n"):
+        if len(part.split(",")) != 4: continue
+        name_data, number_data, _, _ = part.split(",")
+        name = name_data.split("=")[1]
+        number = number_data.split("=")[1].replace(" ","")
+        if number[0] == "+": number = number[1:]
+        if not number.isnumeric() or len(number) < 5: continue
+        left = "|\tName: " + name
+        right = "Number: " + number
+        print(left + ((40 - len(left)) * " ") + right + "\t|\n+-----------------------------------------------------------------------+")
+
+
+def print_phone_massages():
+    result = subprocess.check_output("adb shell content query --uri content://sms/", shell=True)
+    
+    for part in str(result.decode("utf-8")).split("Row:")[::-1]:
+        res = re.sub(r", [a-zA-Z0-9_]*=(0|NULL|,)", "", part)
+        if not res: continue
+        print("*" * 50)
+        print(res)
+        print("*" * 50 + "\n")
+
+def phone_call(query):
+    if query.count(" ") != 1:
+        print("wrong input format")
+        return
+    phone_number = query.split(" ")[1]
+    if not phone_number:
+        print("empty phone number")
+        return
+    
+    result = subprocess.run(f"adb shell am start -a android.intent.action.CALL -d tel:+{phone_number}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
+def print_menu():
     print("\n+------------------------------------ Commands ------------------------------------+")
     print("| run             \\\ run command and enter password if needed run rm -rf xx        |")
     print("| add_forbidden   \\\ example usage add_forbidden www.youtube.com                   |")
@@ -351,14 +410,21 @@ def start():
     print("| get_count       \\\ get count of the urgent open for this month                   |")
     print("| get_free_opens  \\\ get days hours of free open                                   |")
     print("| set_new_open    \\\ this set new open date example set_new_open 0:12-40 6:10-30   |")
-    print("| phone_password  \\\ show the phone password                                       |")
-    print("| set_phone       \\\ set phone password it can be changed                          |")
     print("| get_last_visit  \\\ you can open freely anything 1hour range in last_open         |")
+    print("| phone_password  \\\ show the phone password it decreases open by 1                |")
+    print("| set_phone       \\\ set phone password it can be changed                          |")
+    print("| open_phone      \\\ enter phone password via cable automaticly it decreases open  |")
+    print("| contact_list    \\\ print the contact list of phone                               |")
+    print("| phone_call      \\\ phone call 905322175009 do not forget to write country code   |")
+    print("| phone_massages  \\\ print the phone massages                                      |")
     print("| info            \\\ give general info about how to use application                |")
     print("| help_command    \\\ examples help run or help open it gives detailed explanation  |")
+    print("| menu            \\\ print the main menu                                           |")
     print("| quit(q)         \\\ quit from application                                         |")
     print("+----------------------------------------------------------------------------------+")
 
+def start():
+    print_menu()
     query = input("enter input: ")
     while query != "q" and query != "quit":
         if   "help_command"    in query: help_command(query)
@@ -367,17 +433,23 @@ def start():
         elif "open_forbiddens" in query: open_forbiddens(query)
         elif "add_forbidden"   in query: add_forbidden(query)
         elif "set_phone"       in query: set_phone(query)
+        elif "phone_call"      in query: phone_call(query)
         elif query == "get_forbiddens"  : print(get_forbiddens())
         elif query == "get_count"       : print(get_count())
         elif query == "phone_password"  : print_phone_password()
         elif query == "get_free_opens"  : print(get_free_opens())
         elif query == "info"            : print_info()
         elif query == "get_last_visit"  : print(get_last_visit())
+        elif query == "open_phone"      : open_phone()
+        elif query == "contact_list"    : print(get_contact_list())
+        elif query == "phone_massages"  : print_phone_massages()
+        elif query == "menu"            : print_menu()
         else: print(f"the command is not found: {query}")
         query = input("enter new input: ")
-
+    
     print("aplication is closed")
 
 
 initialize_app()
 start()
+#TODO country code şartmı ona bak
