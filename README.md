@@ -46,10 +46,10 @@ keyring_last_open_username            = "31om13od1m3odm1od1"
 
 4) open the application and enter the password you saved
 
-5) pip install pyinstaller
-   pip install keyring
-   pip install pexpect
-   brew install android-platform-tools
+5) $ pip install pyinstaller
+   $ pip install keyring
+   $ pip install pexpect
+   $ brew install android-platform-tools
    
 
 
@@ -68,3 +68,11 @@ keyring_last_open_username            = "31om13od1m3odm1od1"
     watch this video https://www.youtube.com/watch?v=We45D_TjKdc or write adb: no devices/emulators found to youtube.
 
     ayarlar(settings)->telefone hakkında(about phone) -> yazılım bilgileri -> 7 kere yapım numarasına tıkla -> ayarlara çık gir yap -> en aşağıda geliştirici seçenekleri -> uyanık kal ve usb hata ayıklaması nı aç
+
+
+12) connect phone to computer via usb cable
+   $ adb devices
+   $ adb tcpip 5555
+   $ adb connect device_ip_address:5555 # go to phone wife goto setting of the current connected wifi in the bottom there is IP address like 192.30.5.90
+
+
