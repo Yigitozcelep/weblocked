@@ -419,9 +419,6 @@ def open_phone():
 def print_contact_list():
     result = subprocess.check_output("adb shell content query --uri content://com.android.contacts/data --projection display_name:data1:data4:contact_id", shell=True)
     print("+-----------------------------------------------------------------------+")
-    max_len = 0
-    data = set()
-    ans = []
     for part in result.decode("utf-8").split("\n"):
         if len(part.split(",")) != 4: continue
         name_data, number_data, _, _ = part.split(",")
@@ -431,14 +428,8 @@ def print_contact_list():
         if not number.isnumeric() or len(number) < 5: continue
         left = "|\tName: " + name
         right = "Number: " + number
-        if number in data or number[1:] in data:
-            ans.append(left + " " + right)
-        data.add(number)
-
         print(left + ((40 - len(left)) * " ") + right + "\t|\n+-----------------------------------------------------------------------+")
-
-    for el in ans:
-        print(el)
+    
 
 def print_phone_massages():
     result = subprocess.check_output("adb shell content query --uri content://sms/", shell=True)
