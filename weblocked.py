@@ -307,13 +307,12 @@ def set_new_open(query):
     if not check_interval_format(day1) or not check_interval_format(day2): 
         print("wrong input format")
         return
-    if not is_free_open_interval() and get_count() <= 0 :
+    if get_count() <= 0 :
         print("your count is 0 you can not open forbidden application")
         return
     
-    if not is_free_open_interval():
-        decrement_count()
-        keyring.set_password(keyring_last_open_service, keyring_last_open_username, str(datetime.datetime.today()))
+    decrement_count()
+    keyring.set_password(keyring_last_open_service, keyring_last_open_username, str(datetime.datetime.today()))
 
     
     save_open_format(day1, day2)
