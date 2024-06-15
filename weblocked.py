@@ -26,8 +26,55 @@ keyring_accessible_days_username      = ""
 keyring_last_open_service             = ""       
 keyring_last_open_username            = ""
 
+keyring_ip_address_service             = ""       
+keyring_ip_address_username            = ""
+
 
 current_service_data = "3" * 1000
+
+def get_ip_address():
+    return keyring.get_password(keyring_ip_address_service, keyring_ip_address_username)
+
+def set_ip_address(query):
+    if query.count(" ") != 1:
+        print("invalid format")
+        return
+    ip = query.split(" ")[1]
+    if not ip:
+        print("invalid format empty ip address")
+        return
+    
+    keyring.set_password(keyring_ip_address_service, keyring_ip_address_username, ip)
+    print("ip address successfully updated")
+    connect_phone()
+
+
+def connect_phone():
+    ip_address = get_ip_address()
+    phones = [el for el in subprocess.check_output("adb devices", shell=True).decode("utf-8").split("\n")[1:] if el]
+    if len(phones) >= 2:
+        subprocess.run(f"adb kill-server", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=1)
+        print("phone connected via cable")
+        return
+    print("phones: ", phones)
+    if phones and ip_address in phones[0]:
+        print("phone connected via wifi")
+        return
+    elif phones:
+        print("phone connected via cable")
+        return
+
+    try:
+        result = subprocess.run(f"adb connect {ip_address}:5555", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=1)
+        print(result)
+        if b"No route to host" in result.stdout:
+            print("no phone was found for the ip address")
+            return
+
+        print("phone connected via wifi")
+    except Exception as e:
+        print(f"no phone is found error: {e}")
+
 
 def delete_keyrings():
     if keyring.get_password(keyring_date_data_service, keyring_date_data_username):
@@ -74,6 +121,12 @@ def initialize_app():
             save_open_format(day1, day2)
             break
     
+    if not get_ip_address():
+        print("enter the ip address of phone goto wifi of phone goto settings of wanted wifi go bottom there is ip addres like 192.300.5.42 etc")
+        ip_address = input("enter ip address: ")
+        set_ip_address("ip_address: " + ip_address)
+    
+
 
 
 INITIAL_ETC_HOSTS_TEXT = """##
@@ -355,6 +408,7 @@ def open_phone():
         keyring.set_password(keyring_last_open_service, keyring_last_open_username, str(datetime.datetime.today()))
 
     result = subprocess.run(f"adb shell input text {get_phone_password()}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("result: ", result)
     stdout, stderr = result.stdout.decode('utf-8'), result.stderr.decode('utf-8')
     if stderr:
         print(f"error occured {stderr}")
@@ -362,11 +416,12 @@ def open_phone():
         print(f"your phone successfully opened")
 
 
-
-def get_contact_list():
+def print_contact_list():
     result = subprocess.check_output("adb shell content query --uri content://com.android.contacts/data --projection display_name:data1:data4:contact_id", shell=True)
     print("+-----------------------------------------------------------------------+")
     max_len = 0
+    data = set()
+    ans = []
     for part in result.decode("utf-8").split("\n"):
         if len(part.split(",")) != 4: continue
         name_data, number_data, _, _ = part.split(",")
@@ -376,8 +431,14 @@ def get_contact_list():
         if not number.isnumeric() or len(number) < 5: continue
         left = "|\tName: " + name
         right = "Number: " + number
+        if number in data or number[1:] in data:
+            ans.append(left + " " + right)
+        data.add(number)
+
         print(left + ((40 - len(left)) * " ") + right + "\t|\n+-----------------------------------------------------------------------+")
 
+    for el in ans:
+        print(el)
 
 def print_phone_massages():
     result = subprocess.check_output("adb shell content query --uri content://sms/", shell=True)
@@ -399,7 +460,11 @@ def phone_call(query):
         return
     
     result = subprocess.run(f"adb shell am start -a android.intent.action.CALL -d tel:+{phone_number}", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("result: ", result)
 
+def open_bluetooth():
+    result = subprocess.run(f"adb shell cmd bluetooth_manager enable", shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print("result: ", result)
 
 def print_menu():
     print("\n+------------------------------------ Commands ------------------------------------+")
@@ -412,11 +477,13 @@ def print_menu():
     print("| set_new_open    \\\ this set new open date example set_new_open 0:12-40 6:10-30   |")
     print("| get_last_visit  \\\ you can open freely anything 1hour range in last_open         |")
     print("| phone_password  \\\ show the phone password it decreases open by 1                |")
-    print("| set_phone       \\\ set phone password it can be changed                          |")
+    print("| set_phone       \\\ set phone password it can be changed it decrease open         |")
     print("| open_phone      \\\ enter phone password via cable automaticly it decreases open  |")
     print("| contact_list    \\\ print the contact list of phone                               |")
-    print("| phone_call      \\\ phone call 905322175009 do not forget to write country code   |")
+    print("| phone_call      \\\ phone call 905322175009                                       |")
     print("| phone_massages  \\\ print the phone massages                                      |")
+    print("| open_bluetooth  \\\ open bluetoth of the phone usually for car connection         |")
+    print("| set_ip          \\\ set_ip 195.193.2.90 phone wife -> settings -> bottom of page  |")
     print("| info            \\\ give general info about how to use application                |")
     print("| help_command    \\\ examples help run or help open it gives detailed explanation  |")
     print("| menu            \\\ print the main menu                                           |")
@@ -424,6 +491,7 @@ def print_menu():
     print("+----------------------------------------------------------------------------------+")
 
 def start():
+    connect_phone()
     print_menu()
     query = input("enter input: ")
     while query != "q" and query != "quit":
@@ -434,6 +502,7 @@ def start():
         elif "add_forbidden"   in query: add_forbidden(query)
         elif "set_phone"       in query: set_phone(query)
         elif "phone_call"      in query: phone_call(query)
+        elif "set_ip"          in query: set_ip_address(query)
         elif query == "get_forbiddens"  : print(get_forbiddens())
         elif query == "get_count"       : print(get_count())
         elif query == "phone_password"  : print_phone_password()
@@ -441,15 +510,16 @@ def start():
         elif query == "info"            : print_info()
         elif query == "get_last_visit"  : print(get_last_visit())
         elif query == "open_phone"      : open_phone()
-        elif query == "contact_list"    : print(get_contact_list())
+        elif query == "contact_list"    : print_contact_list()
+        elif query == "open_bluetooth"  : open_bluetooth()
         elif query == "phone_massages"  : print_phone_massages()
         elif query == "menu"            : print_menu()
         else: print(f"the command is not found: {query}")
         query = input("enter new input: ")
-    
-    print("aplication is closed")
 
+
+    print("aplication is closed")
+    
 
 initialize_app()
 start()
-#TODO country code şartmı ona bak
