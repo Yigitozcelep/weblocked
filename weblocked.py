@@ -155,7 +155,7 @@ def get_initial_today_month_dif():
 
 
 def run_command(query):
-    if query.count(" ") != 1:
+    if query.count(" ") < 1:
         print("invalid format")
         return
     
